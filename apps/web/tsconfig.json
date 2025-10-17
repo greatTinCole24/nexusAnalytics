@@ -1,0 +1,16 @@
+{
+  "extends": "../../packages/config/tsconfig/base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/components/*": ["components/*"],
+      "@/lib/*": ["lib/*"],
+      "@nexus/core": ["../../packages/core/src"],
+      "@nexus/ui": ["../../packages/ui/src"],
+      "@nexus/llm": ["../../packages/llm/src"]
+    },
+    "types": ["node", "next", "next/types/global", "next/navigation", "next-auth"]
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}
