@@ -41,9 +41,6 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true
-  },
   headers: async () => [
     {
       source: '/(.*)',
