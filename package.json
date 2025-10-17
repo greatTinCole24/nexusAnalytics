@@ -16,7 +16,7 @@
     "packages/*"
   ],
   "engines": {
-    "node": ">=18.17.0 <19"
+    "node": "22.x"
   },
   "devDependencies": {
     "@types/node": "20.11.19",
