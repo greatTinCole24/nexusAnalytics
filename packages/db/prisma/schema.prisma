@@ -1,0 +1,282 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["views"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id           String        @id @default(cuid())
+  name         String
+  slug         String        @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  memberships  Membership[]
+  dashboards   Dashboard[]
+  subscriptions Subscription[]
+  apiKeys      ApiKey[]
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  image        String?
+  createdAt    DateTime      @default(now())
+  memberships  Membership[]
+  queries      QueryHistory[]
+}
+
+model Membership {
+  id             String        @id @default(cuid())
+  role           MembershipRole
+  userId         String
+  organizationId String
+  user           User          @relation(fields: [userId], references: [id])
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime      @default(now())
+
+  @@unique([userId, organizationId])
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+model Game {
+  id           String   @id @default(cuid())
+  name         String
+  type         GameType
+  leagues      League[]
+  teams        Team[]
+  players      Player[]
+}
+
+enum GameType {
+  ESPORTS
+  SPORTS
+}
+
+model League {
+  id       String   @id @default(cuid())
+  name     String
+  region   String?
+  gameId   String
+  game     Game     @relation(fields: [gameId], references: [id])
+  teams    Team[]
+  matches  Match[]
+}
+
+model Team {
+  id         String   @id @default(cuid())
+  name       String
+  shortCode  String?
+  region     String?
+  leagueId   String?
+  organizationId String?
+  league     League?  @relation(fields: [leagueId], references: [id])
+  players    Player[]
+  matches    MatchStat[]
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  handle    String
+  name      String?
+  role      String?
+  teamId    String?
+  team      Team?    @relation(fields: [teamId], references: [id])
+  stats     MatchStat[]
+}
+
+model Match {
+  id           String      @id @default(cuid())
+  externalId   String?     @unique
+  gameId       String
+  leagueId     String?
+  startTime    DateTime
+  endTime      DateTime?
+  status       String      @default("completed")
+  homeTeamId   String?
+  awayTeamId   String?
+  game         Game        @relation(fields: [gameId], references: [id])
+  league       League?     @relation(fields: [leagueId], references: [id])
+  stats        MatchStat[]
+}
+
+model MatchStat {
+  id          String   @id @default(cuid())
+  matchId     String
+  teamId      String?
+  playerId    String?
+  metric      String
+  value       Float
+  createdAt   DateTime @default(now())
+  match       Match    @relation(fields: [matchId], references: [id])
+  team        Team?    @relation(fields: [teamId], references: [id])
+  player      Player?  @relation(fields: [playerId], references: [id])
+}
+
+model Dashboard {
+  id             String    @id @default(cuid())
+  name           String
+  organizationId String
+  description    String?
+  layout         Json      @default(json('{}'))
+  createdById    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  widgets        Widget[]
+}
+
+model Widget {
+  id          String    @id @default(cuid())
+  dashboardId String
+  title       String
+  querySpec   Json
+  visualization Json
+  position    Json      @default(json('{}'))
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id])
+}
+
+model SavedQuery {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  querySpec      Json
+  createdAt      DateTime @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+model QueryHistory {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  query          Json
+  createdAt      DateTime @default(now())
+  user           User        @relation(fields: [userId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+model Subscription {
+  id             String   @id @default(cuid())
+  planId         String
+  organizationId String
+  status         SubscriptionStatus @default(ACTIVE)
+  currentPeriodEnd DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  plan           Plan          @relation(fields: [planId], references: [id])
+  invoices       Invoice[]
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+model Plan {
+  id          String @id @default(cuid())
+  name        String
+  stripePriceId String?
+  description String?
+  features    String[]
+  priceMonthly Int
+  priceYearly  Int
+  tier        PlanTier
+  subscriptions Subscription[]
+}
+
+enum PlanTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+model Invoice {
+  id             String   @id @default(cuid())
+  subscriptionId String
+  amount         Int
+  status         String
+  issuedAt       DateTime @default(now())
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+}
+
+model ApiKey {
+  id             String   @id @default(cuid())
+  organizationId String
+  key            String   @unique
+  name           String
+  createdAt      DateTime @default(now())
+  lastUsedAt     DateTime?
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+model SemanticTerm {
+  id          String @id @default(cuid())
+  term        String @unique
+  description String
+  metadata    Json
+}
+
+model ProviderSource {
+  id          String @id @default(cuid())
+  name        String
+  type        String
+  game        String
+  config      Json
+  createdAt   DateTime @default(now())
+}
+
+model IngestionJob {
+  id          String   @id @default(cuid())
+  providerId  String
+  status      String   @default("pending")
+  scheduledAt DateTime
+  completedAt DateTime?
+  provider    ProviderSource @relation(fields: [providerId], references: [id])
+}
+
+view v_matches {
+  id          String
+  game        String
+  league      String?
+  match_date  DateTime
+  home_team   String?
+  away_team   String?
+}
+
+view v_players {
+  id        String
+  name      String?
+  handle    String
+  team      String?
+  game      String?
+  role      String?
+}
+
+view v_ratings {
+  id        String
+  entity    String
+  game      String
+  rating    Float
+  captured  DateTime
+}
+
+view v_viewership {
+  id        String
+  game      String
+  platform  String
+  viewers   Int
+  captured  DateTime
+}
