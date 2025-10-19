@@ -17,7 +17,7 @@ export async function DashboardCards() {
       {dashboards.map((dashboard: any) => (
         <Link
           key={dashboard.id}
-          href={\`/dashboards/${dashboard.id}\`}
+          href={`/dashboards/${dashboard.id}`}
           className="block rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-primary/60"
         >
           <h3 className="text-xl font-semibold text-white">{dashboard.name}</h3>
