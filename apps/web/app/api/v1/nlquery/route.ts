@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { classifyIntent, registry } from '@nexus/core';
-import { buildNlPrompt } from '@nexus/llm';
+import { registry } from '@nexus/core';
+import { buildNlPrompt, classifyIntent } from '@nexus/llm';
 
 export async function POST(request: Request) {
   const body = await request.json();
